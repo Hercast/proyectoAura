@@ -1,0 +1,52 @@
+#include <Thread.h>
+#include <ThreadController.h>
+#include <TimerOne.h>
+int ledPin = 4;
+int ledPin2 = 7;
+
+Thread hilacho1 = Thread();
+Thread hilacho2 = Thread();
+
+ThreadController controller = ThreadController();
+
+
+void prende1() {
+
+  static bool ledStatus = false;
+
+  ledStatus = !ledStatus;
+  digitalWrite(ledPin,ledStatus);
+  }
+
+  void prende2() {
+
+  static bool ledStatus = false;
+
+  ledStatus = !ledStatus;
+  digitalWrite(ledPin2,ledStatus);
+  }
+  
+void setup() {
+  
+  Serial.begin(9600);
+  pinMode(ledPin,OUTPUT);
+  pinMode(ledPin2,OUTPUT);
+  
+  hilacho1.onRun(prende1);
+  hilacho1.setInterval(500);
+
+  hilacho2.onRun(prende2);
+  hilacho2.setInterval(1000);
+
+  controller.add(&hilacho1);
+  controller.add(&hilacho2);
+ 
+ // Timer1.initialize(2000);
+  //Timer1.attachInterrupt(timerCallback);
+  //Timer1.start();
+ 
+} 
+
+void loop() {
+controller.run();
+}
