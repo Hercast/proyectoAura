@@ -1,52 +1,75 @@
 #include <Thread.h>
 #include <ThreadController.h>
-#include <TimerOne.h>
-int ledPin = 4;
-int ledPin2 = 7;
+#include <Wire.h>
+/* Declaracion de pines*/
+#define encAnlg 4
+#define encButton 5
+#define wireClock  7
+#define wireData  6
 
-Thread hilacho1 = Thread();
+/* Dependiendo de la cantidad de procesos se define la cantidad de tread
+
+  1. Thread para la recoleccion de datos: En este thread de debe iniciar la comunicacion
+  serial de datos con el sensor a traves del protocolo ic2, usando la libreria Wire, para ello
+  se usan dos pines del arduino para enviar datos y pulso de reloj
+
+  2. Thread para monitoreo de boton del encoder: Con este thread se va a evualar si el boton es
+  precionado, luego si es precionado.
+
+*/
+Thread collectDataSensor = Thread();
+Thread monitoringEnc = Thread();
 Thread hilacho2 = Thread();
 
 ThreadController controller = ThreadController();
+class ButtonThread: public Thread{
+public:
+  // Our custom thread attributes
+  int pin;
+  long duration;
+  long _lastButtonPushed;
 
+  ButtonThread(int _pin, long _duration): Thread(){
+    // Set our attributes on construct
+    pin = _pin;
+    duration = _duration;
+    _lastButtonPushed = 0;
 
-void prende1() {
+    // Thread will start disabled
+    enabled = false;
 
-  static bool ledStatus = false;
-
-  ledStatus = !ledStatus;
-  digitalWrite(ledPin,ledStatus);
+    // Configure the pin as INPUT and enable pull-up
+    pinMode(pin, INPUT);
+    digitalWrite(pin, HIGH);
   }
 
-  void prende2() {
+  bool shouldRun(unsigned long time){
+    // Override enabled on thread when pin goes LOW.
+    if(digitalRead(pin) == LOW){
+      enabled = true;
+      _lastButtonPushed = (time ? time : millis());
+    }
 
-  static bool ledStatus = false;
-
-  ledStatus = !ledStatus;
-  digitalWrite(ledPin2,ledStatus);
+    // Let default method check for it.
+    return Thread::shouldRun(time);
   }
+
+  void run(){
+    // Check if time elapsed since last button push
+    if(millis() > _lastButtonPushed + duration){
+      // It exceeded time. We should disable it.
+      enabled = false;
+    }
+    Thread::run();
+  }
+};
   
 void setup() {
-  
-  Serial.begin(9600);
-  pinMode(ledPin,OUTPUT);
-  pinMode(ledPin2,OUTPUT);
-  
-  hilacho1.onRun(prende1);
-  hilacho1.setInterval(500);
+  Wire.begin();
+  Serial.begin(9600)
 
-  hilacho2.onRun(prende2);
-  hilacho2.setInterval(1000);
-
-  controller.add(&hilacho1);
-  controller.add(&hilacho2);
- 
- // Timer1.initialize(2000);
-  //Timer1.attachInterrupt(timerCallback);
-  //Timer1.start();
- 
 } 
 
 void loop() {
-controller.run();
+  controller.run();
 }
