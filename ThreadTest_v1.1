@@ -1,11 +1,13 @@
 #include <Thread.h>
 #include <ThreadController.h>
 #include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 /* Declaracion de pines*/
-#define encAnlg 4
-#define encButton 5
-#define wireClock  7
-#define wireData  6
+#define EncA 1
+#define EncB 2
+#define EncButton 3 
+
+LiquidCrystal_I2C lcd(0x27,16,2);
 
 /* Dependiendo de la cantidad de procesos se define la cantidad de tread
 
@@ -17,12 +19,11 @@
   precionado, luego si es precionado.
 
 */
-Thread collectDataSensor = Thread();
-Thread monitoringEnc = Thread();
-Thread hilacho2 = Thread();
 
 ThreadController controller = ThreadController();
-class ButtonThread: public Thread{
+Thread lcdThread = Thread();
+
+/*class ButtonThread: public Thread{
 public:
   // Our custom thread attributes
   int pin;
@@ -62,12 +63,22 @@ public:
     }
     Thread::run();
   }
-};
+};  */
+
+// ButtonThread encThread(encButton,1000);
+void lcd_callback(){
+  
+  }
   
 void setup() {
+  //Configuracion del LCD
+  lcd.init();
+  lcd.backlight();
   Wire.begin();
-  Serial.begin(9600)
-
+  Serial.begin(9600);
+  lcdThread.onRun(lcd_callback);
+  lcdThread.setInterval(1000);
+  controller.add(&lcdThread);
 } 
 
 void loop() {
