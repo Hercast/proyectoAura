@@ -65,9 +65,9 @@ public:
     Thread::run();
   }
 };  */
-void lcd_callback (int freq,int ie,int volume){
+const lcd_callback(int freq,int ie,int volume){
   
-  }
+  };
   
 void setup() {
   //Configuracion del LCD
