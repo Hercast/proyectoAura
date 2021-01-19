@@ -1,29 +1,20 @@
 class Configuration{
-  private:
-      int ie;
-      int freq;
-      int volume;
-      int pin;
-      double periodo;
-      Configuration(int _ie, int _freq, int _pin){
-        ie=_ie;
-        freq=_freq;
-        pin = _pin;
-        pinMode(pin,OUTPUT);
-      }
-      void _setFreq(int freq){
+  public:
+      static int ie;
+      static int freq;
+      static int volume;
+      static int pin;
+      static double periodo;
+      static void setFreq(int freq){
       periodo = 1/freq;
       }
 
-      void _setIE(int ie){
+      static void setIE(int ie){
       }
-      int getPreasure(){
+      static int getPreasure(){
       return;
       }
-   
-  public:
-    //Atributos
-    void commission(int pin){
+       //Atributos
+      static void commission(){
       }
 };
-    
