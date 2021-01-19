@@ -2,10 +2,14 @@
 #include <ThreadController.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+
 /* Declaracion de pines*/
+
 #define EncA 1
 #define EncB 2
-#define EncButton 3 
+#define EncButton 3
+
+//Definir direccion IC2 del LCD
 
 LiquidCrystal_I2C lcd(0x27,16,2);
 
