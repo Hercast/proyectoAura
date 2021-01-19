@@ -24,7 +24,11 @@ public:
     // Override enabled on thread when pin goes LOW.
     if(digitalRead(pin) == LOW){
       enabled = true;
-      _lastButtonPushed = (time ? time : millis());
+      if (time > 0){
+        _lastButtonPushed = time;
+      } else{
+        _lastButtonPushed = millis();
+      }
     }
 
     // Let default method check for it.
