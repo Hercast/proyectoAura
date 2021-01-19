@@ -2,6 +2,7 @@
 #include <ThreadController.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include "Configuration.h"
 /* Declaracion de pines*/
 #define EncA 1
 #define EncB 2
