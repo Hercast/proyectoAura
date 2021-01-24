@@ -123,9 +123,11 @@ void button_callback(){
 
 void setup() {
   //Configuracion del LCD
+  Configuration configuracion;
   lcd.init();
   lcd.backlight();
   pinMode(EncButton,INPUT_PULLUP);
+  pinMode(Valve,OUTPUT);
     //Mensaje inicial
   lcd.setCursor(2,1);
   lcd.print("Aura Alpha Box");
@@ -139,7 +141,7 @@ void setup() {
   encoder.onRun(button_callback);
   encoder.setInterval(1000);
   controller.add(&encoder);
-  enMarcha.onRun(Configuration::commission);
+  enMarcha.onRun(configuracion.commission);
   enMarcha.setInterval(20000);
 } 
 void loop() {
