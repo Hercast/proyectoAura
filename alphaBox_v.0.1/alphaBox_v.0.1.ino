@@ -11,7 +11,7 @@
 #define Valve 5 
 
 int Configuration::freq, Configuration::ie, Configuration::volume; 
-int aux,currentStateCLK,lastStateCLK,lastButtonPress,lectura,freq,ie,value;
+int aux,currentStateCLK,lastStateCLK,lastButtonPress,lectura,freq,ie,value,counter;
 
 LiquidCrystal_I2C lcd(0x27,16,2);
 ThreadController controller = ThreadController();
@@ -23,7 +23,6 @@ ButtonThread encoder= ButtonThread(EncButton,20000);
 
 int encoderRead(){
 
-  int counter = 0;
   currentStateCLK = digitalRead(EncA);
     if (currentStateCLK != lastStateCLK  && currentStateCLK == 1){
 
@@ -43,7 +42,8 @@ int encoderRead(){
   return counter;
 }
 
-void initial_state(){
+int initial_state(){
+  
     Serial.println("entre al Initial State");
     aux = 0;
     //Captura de informacion
@@ -51,11 +51,14 @@ void initial_state(){
     //FRECUENCIA
     
     do {
+      
       aux= 0;
       lcd.setCursor(0,0);
       lcd.print("Frecuencia:");
       freq = encoderRead();
-      /*switch (freq) {
+
+      /*
+      switch (freq) {
 
         case '0':
           freq = 10;
@@ -83,19 +86,19 @@ void initial_state(){
 
           //Update with a default statement.  
         }*/
-        
+       
       lcd.setCursor(12,0);
       lcd.print(freq);
 
       
-      /*
+      
       if (digitalRead(EncButton) == LOW){
         if (millis()- lastButtonPress > 50){
         aux = 1;
         }
         lastButtonPress = millis();
-      }*/
-    } while(aux = 0);
+      }
+    } while(aux == 0);
 /*
         //RELACION IE
     do {
@@ -116,12 +119,15 @@ void initial_state(){
       }
     } while(aux = 1); 
     */
-} 
+
+return 0;} 
+
 
 void button_callback(){
 };
 
 void setup() {
+  Serial.begin(9600);
   //Configuracion del LCD
   lcd.init();
   lcd.backlight();
@@ -133,7 +139,7 @@ void setup() {
   lcd.clear();
   lastStateCLK = digitalRead(EncA);
   // Configuracion inicial
-  initial_state();
+  int prueba = initial_state();
   lcd.setCursor(2,1);
   lcd.print("Sali del initial state");
   encoder.onRun(button_callback);
