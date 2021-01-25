@@ -6,7 +6,7 @@ class Configuration{
       static int pin;
       static double periodo;
       static double porcentaje;
-      static unsigned long lastTime
+      static unsigned long lastTime;
       
       static void setFreq(){
       periodo = 1/freq;
@@ -25,7 +25,7 @@ class Configuration{
         setFreq();
         getPreasure();
         do{
-          digitalWrite(pin,HIGH)
-          }while ((millis()- lastTime< (periodo * porcentaje)))
+          digitalWrite(pin,HIGH);
+          }while ((millis()- lastTime< (periodo * porcentaje)));
       }
 };

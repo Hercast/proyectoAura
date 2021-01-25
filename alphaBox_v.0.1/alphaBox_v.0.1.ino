@@ -11,7 +11,7 @@
 #define Valve 5 
 
 int Configuration::freq, Configuration::ie, Configuration::volume; 
-int aux,currentStateCLK,lastStateCLK,lastButtonPress,lectura,freq,ie,value,counter;
+int aux,currentStateCLK,lastStateCLK,lastButtonPress,lectura,freq,ie,value;
 
 LiquidCrystal_I2C lcd(0x27,16,2);
 ThreadController controller = ThreadController();
@@ -21,41 +21,87 @@ ButtonThread encoder= ButtonThread(EncButton,20000);
 // Update this shit, use value directly. Get rid of dataRead.
 
 
-int encoderRead(){
+int freqRead(){
+  int aux = 1;
+  static int counter, counter2;
 
-  currentStateCLK = digitalRead(EncA);
-    if (currentStateCLK != lastStateCLK  && currentStateCLK == 1){
-
-      // If the DT state is different than the CLK state then
-      // the encoder is rotating CCW so decrement
-      if (digitalRead(EncB) != currentStateCLK) {
-        counter = counter - 5;
-        
-        }  else {
-          // Encoder is rotating CW so increment
-          counter = counter + 5;
-        
-      }
-
+  while (aux == 1) {
+    currentStateCLK = digitalRead(EncA);
+        if (currentStateCLK != lastStateCLK  && currentStateCLK == 1){
+        // If the DT state is different than the CLK state then
+        // the encoder is rotating CCW so decrement
+          if (digitalRead(EncB) != currentStateCLK) {
+            counter = counter - 20;
+            counter = min(max(0,counter),100);
+            counter2 = map(counter,0,100,10,15);
+          }  else {
+            // Encoder is rotating CW so increment
+            counter = counter + 20;
+            counter = min(max(0,counter),100);
+            counter2 = map(counter,0,100,10,15);
+          }
+        }
+    
+    lcd.setCursor(12,0);
+    lcd.print(counter2);
+    lastStateCLK = currentStateCLK;
+    
+    Serial.println(counter2);
+    if (digitalRead(EncButton) == LOW){
+        if (millis()- lastButtonPress > 50){
+          aux = 0;
+        }
+      lastButtonPress = millis();
     }
-  lastStateCLK = currentStateCLK;
-  return counter;
+  }
+  return counter2;
 }
+int ieRead(){
+  int aux = 1;
+  static int counter, counter2;
 
-int initial_state(){
+  while (aux == 1) {
+    currentStateCLK = digitalRead(EncA);
+        if (currentStateCLK != lastStateCLK  && currentStateCLK == 1){
+        // If the DT state is different than the CLK state then
+        // the encoder is rotating CCW so decrement
+          if (digitalRead(EncB) != currentStateCLK) {
+            counter = counter - 10;
+            counter = min(max(0,counter),30);
+            counter2 = map(counter,0,30,1,3);
+          }  else {
+            // Encoder is rotating CW so increment
+            counter = counter + 10;
+            counter = min(max(0,counter),30);
+            counter2 = map(counter,0,30,1,3);
+          }
+        }
+    
+    lcd.setCursor(15,0);
+    lcd.print(counter2);
+    lastStateCLK = currentStateCLK;
+    
+    Serial.println(counter2);
+    if (digitalRead(EncButton) == LOW){
+        if (millis()- lastButtonPress > 50){
+          aux = 0;
+        }
+      lastButtonPress = millis();
+    }
+  }
+  return counter2;
+
+
+}
+void initial_state(){
   
     Serial.println("entre al Initial State");
-    aux = 0;
     //Captura de informacion
 
     //FRECUENCIA
-    
-    do {
-      
-      aux= 0;
       lcd.setCursor(0,0);
       lcd.print("Frecuencia:");
-      freq = encoderRead();
+      freq = freqRead();
 
       /*
       switch (freq) {
@@ -89,9 +135,18 @@ int initial_state(){
        
       lcd.setCursor(12,0);
       lcd.print(freq);
+      delay(1000);
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Relacion I-E:1/");
+      ie = ieRead();
+      lcd.setCursor(15,0);
+      lcd.print(ie);
+      delay(1000);
+      
 
       
-      
+      /*
       if (digitalRead(EncButton) == LOW){
         if (millis()- lastButtonPress > 50){
         aux = 1;
@@ -120,7 +175,7 @@ int initial_state(){
     } while(aux = 1); 
     */
 
-return 0;} 
+} 
 
 
 void button_callback(){
@@ -139,9 +194,14 @@ void setup() {
   lcd.print("Aura Alpha Box");
   delay(3000);
   lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Ajustar");
+  lcd.setCursor(2,1);
+  lcd.print("lentamente");
+  lcd.clear();
   lastStateCLK = digitalRead(EncA);
   // Configuracion inicial
-  int prueba = initial_state();
+  initial_state();
   lcd.setCursor(2,1);
   lcd.print("Sali del initial state");
   encoder.onRun(button_callback);
