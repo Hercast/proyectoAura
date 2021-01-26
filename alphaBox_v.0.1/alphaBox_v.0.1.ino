@@ -2,7 +2,6 @@
 #include <Thread.h>
 #include <ThreadController.h>
 #include <LiquidCrystal_I2C.h>
-#include "Configuration.h"
 #include "ButtonThread.h"
 /* Declaracion de pines*/ 
 #define EncA 2
@@ -10,8 +9,11 @@
 #define EncButton 4
 #define Valve 5 
 
-int Configuration::freq, Configuration::ie, Configuration::volume; 
-int aux,currentStateCLK,lastStateCLK,lastButtonPress,lectura,freq,ie,value;
+// int Configuration::freq, Configuration::ie, Configuration::volume; 
+int aux,currentStateCLK,lastStateCLK,lastButtonPress,lectura,value;
+unsigned long lastTime;
+double periodo,freq,ie;
+double expOn, expOff;
 
 LiquidCrystal_I2C lcd(0x27,16,2);
 ThreadController controller = ThreadController();
@@ -116,6 +118,41 @@ void initial_state(){
   delay(1000);      
 } 
 
+void commission(){
+
+/*
+Serial.println("prendi valve");
+digitalWrite(Valve,HIGH);
+delay(1000);
+digitalWrite(Valve,LOW);
+Serial.println("apague valve");
+delay(1000);
+*/
+
+  
+  periodo = 60 * (1/freq);
+  expOn = (periodo/(ie+1));
+  lastTime = 0;
+  // Serial.println(expOn);
+  //Serial.println(periodo);
+  //Serial.println(expOn);
+
+  do {
+     Serial.print(millis()- lastTime );
+     Serial.print(" ");
+     Serial.print(expOn *1000);
+     Serial.println();
+    digitalWrite(Valve,HIGH);    
+  } while((millis()- lastTime) < (expOn * 1000));
+
+  
+  expOff = (ie * (periodo/(ie+1)));
+  
+  do {
+    digitalWrite(Valve,LOW);
+  }while((millis()-lastTime) < (expOff * 1000));
+  lastTime = millis();
+};
 
 void button_callback(){
 };
@@ -123,7 +160,6 @@ void button_callback(){
 void setup() {
   Serial.begin(9600);
   //Configuracion del LCD
-  Configuration configuracion;
   lcd.init();
   lcd.backlight();
   pinMode(EncButton,INPUT_PULLUP);
@@ -143,13 +179,15 @@ void setup() {
   initial_state();
   lcd.setCursor(2,1);
   lcd.print("Sali del initial state");
-  encoder.onRun(button_callback);
-  encoder.setInterval(1000);
-  controller.add(&encoder);
-  enMarcha.onRun(configuracion.commission);
-  enMarcha.setInterval(20000);
+  //Puesta en marcha
+  //encoder.onRun(button_callback);
+  //encoder.setInterval(1000);
+  //controller.add(&encoder);
+  //enMarcha.onRun(configuracion.commission);
+  //enMarcha.setInterval(20000);
 } 
 
 void loop() {
 //  controller.run();
+  commission();
 }
