@@ -1,8 +1,15 @@
+
+/*Proyect Aura 26-Jan-2021
+Contributors:
+Eliezer Maduro
+Hermes Castellano
+
+*/
 #include <Wire.h> 
 #include <Thread.h>
 #include <ThreadController.h>
 #include <LiquidCrystal_I2C.h>
-#include "ButtonThread.h"
+
 /* Declaracion de pines*/ 
 #define EncA 2
 #define EncB 3
@@ -14,11 +21,58 @@ int aux,currentStateCLK,lastStateCLK,lastButtonPress,lectura,value;
 unsigned long lastTime;
 double periodo,freq,ie;
 double expOn, expOff;
+int freqFut,ieFut;
+
+class ButtonThread: public Thread{
+public:
+  // Our custom thread attributes
+  int pin;
+  long duration;
+  long _lastButtonPushed;
+
+  ButtonThread(int _pin, long _duration): Thread(){
+    // Set our attributes on construct
+    pin = _pin;
+    duration = _duration;
+    _lastButtonPushed = 0;
+
+    // Thread will start disabled
+    enabled = false;
+
+    // Configure the pin as INPUT and enable pull-up
+    pinMode(pin, INPUT);
+    digitalWrite(pin, HIGH);
+  }
+
+  bool shouldRun(unsigned long time){
+    // Override enabled on thread when pin goes LOW.
+    if(digitalRead(pin) == LOW){
+      enabled = true;
+      if (time > 0){
+        _lastButtonPushed = time;
+      } else{
+        _lastButtonPushed = millis();
+      }
+    }
+
+    // Let default method check for it.
+    return Thread::shouldRun(time);
+  }
+
+  void run(){
+    // Check if time elapsed since last button push
+    if(millis() > _lastButtonPushed + duration){
+      // It exceeded time. We should disable it.
+      enabled = false;
+    }
+    Thread::run();
+  }
+}; 
 
 LiquidCrystal_I2C lcd(0x27,16,2);
 ThreadController controller = ThreadController();
 Thread enMarcha = Thread();
-ButtonThread encoder= ButtonThread(EncButton,20000);
+ButtonThread encoder= ButtonThread(EncButton,10);
 
 // Update this shit, use value directly. Get rid of dataRead.
 
@@ -120,41 +174,65 @@ void initial_state(){
 
 void commission(){
 
-/*
-Serial.println("prendi valve");
-digitalWrite(Valve,HIGH);
-delay(1000);
-digitalWrite(Valve,LOW);
-Serial.println("apague valve");
-delay(1000);
-*/
-
-  
   periodo = 60 * (1/freq);
-  expOn = (periodo/(ie+1));
-  lastTime = 0;
-  // Serial.println(expOn);
-  //Serial.println(periodo);
-  //Serial.println(expOn);
-
-  do {
-     Serial.print(millis()- lastTime );
-     Serial.print(" ");
-     Serial.print(expOn *1000);
-     Serial.println();
-    digitalWrite(Valve,HIGH);    
-  } while((millis()- lastTime) < (expOn * 1000));
-
-  
-  expOff = (ie * (periodo/(ie+1)));
-  
-  do {
-    digitalWrite(Valve,LOW);
-  }while((millis()-lastTime) < (expOff * 1000));
+  expOn = (periodo/(ie+1))*1000;
+  expOff = (ie * (periodo/(ie+1)))*1000;
+ 
   lastTime = millis();
+  do {
+    //Serial.println("Prendi la valve");
+    digitalWrite(Valve,HIGH);    
+  } while(millis()- lastTime < expOn);
+
+  lastTime = millis();
+  do {
+    //Serial.println("Apague la valve");
+    digitalWrite(Valve,LOW);
+  }while(millis()-lastTime < expOff);
+  
 };
 
 void button_callback(){
+
+  //Serial.println("Detecte al encoder");
+  static unsigned long buttonLastTime;
+  Serial.println("entre al Initial State");
+  //Captura de informacion
+
+  //FRECUENCIA
+
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Frecuencia:");
+  buttonLastTime = millis();
+  do{
+
+  }while(millis() - buttonLastTime < 1000);
+  
+  freqFut = freqRead();
+
+  lcd.setCursor(12,0);
+  lcd.print(freqFut);
+  buttonLastTime = millis();
+  do{
+
+  }while(millis() - buttonLastTime < 1000);
+  
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Relacion I-E:1/");
+  ieFut = ieRead();
+  lcd.setCursor(15,0);
+  lcd.print(ieFut);
+
+  buttonLastTime = millis();
+  do{
+
+  }while(millis() - buttonLastTime < 1000);
+
+  freq= freqFut;
+  ie = ieFut;
+  
 };
 
 void setup() {
@@ -180,14 +258,9 @@ void setup() {
   lcd.setCursor(2,1);
   lcd.print("Sali del initial state");
   //Puesta en marcha
-  //encoder.onRun(button_callback);
-  //encoder.setInterval(1000);
-  //controller.add(&encoder);
-  //enMarcha.onRun(configuracion.commission);
-  //enMarcha.setInterval(20000);
+
 } 
 
 void loop() {
-//  controller.run();
   commission();
 }

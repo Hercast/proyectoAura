@@ -1,4 +1,4 @@
-class Configuration{
+chclass Configuration{
   public:
     static int ie;
     static int freq;
